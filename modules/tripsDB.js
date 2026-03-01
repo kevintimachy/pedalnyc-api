@@ -78,11 +78,22 @@ module.exports = class TripDB {
             query['usertype'] = filters.usertype;
         }
 
-        return this.Trip.find(query)
-            .sort({ _id: 1 })
-            .skip((page - 1) * perPage)
-            .limit(perPage)
-            .exec();
+        return Promise.all([
+            this.Trip.find(query)
+                .sort({ _id: 1 })
+                .skip((page - 1) * perPage)
+                .limit(perPage)
+                .lean()
+                .exec(),
+
+            this.Trip.countDocuments(query)
+        ]).then(([trips, total]) => ({
+            trips,
+            total,
+            page,
+            perPage,
+            totalPages: Math.ceil(total / perPage)
+        }));
     }
 
     getTripById(id) {
