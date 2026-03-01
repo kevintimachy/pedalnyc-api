@@ -13,11 +13,11 @@ const tripSchema = new Schema({
     "birth year": Number,
     "gender": Number,
     "start station location": {
-        "type": {type: String},
+        "type": { type: String },
         "coordinates": [Number]
     },
     "end station location": {
-        "type": {type: String},
+        "type": { type: String },
         "coordinates": [Number]
     },
     "start time": Date,
@@ -26,25 +26,21 @@ const tripSchema = new Schema({
 
 module.exports = class TripDB {
     constructor() {
-         // We don't have a `Trip` object until initialize() is complete
+        // We don't have a `Trip` object until initialize() is complete
         this.Trip = null;
+        this.connection = null;
     }
 
     // Pass the connection string to `initialize()`
-    initialize(connectionString) {
-        return new Promise((resolve, reject) => {
-           const db = mongoose.createConnection(
-               connectionString
-            );
-           
-            db.once('error', (err) => {
-                reject(err);
-            });
-            db.once('open', () => {
-                this.Trip = db.model("trips", tripSchema);
-                resolve();
-            });
-        });
+    async initialize(connectionString) {
+        if (!connectionString) {
+            throw new Error("Missing MongoDB connection string");
+        }
+
+        this.connection = mongoose.createConnection(connectionString);
+        await this.connection.asPromise();
+
+        this.Trip = this.connection.model("trips", tripSchema);
     }
 
     async addNewTrip(data) {
@@ -52,24 +48,52 @@ module.exports = class TripDB {
         await newTrip.save();
         return newTrip;
     }
-    
-    getAllTrips(page, perPage) { 
-        if(+page && +perPage){
-            return this.Trip.find().sort({_id: +1}).skip((page - 1) * +perPage).limit(+perPage).exec();
+
+    getAllTrips(page, perPage, filters) {
+        const query = {};
+
+        // Filter by date range
+        if (filters.startDate || filters.endDate) {
+            query['start time'] = {};
+            if (filters.startDate) query['start time'].$gte = new Date(filters.startDate);
+            if (filters.endDate) query['start time'].$lte = new Date(filters.endDate);
         }
-        
-        return Promise.reject(new Error('page and perPage query parameters must be valid numbers'));
+
+        // Filter by birth year range
+        if (filters.minBirthYear || filters.maxBirthYear) {
+            query['birth year'] = {};
+            if (filters.minBirthYear) query['birth year'].$gte = parseInt(filters.minBirthYear, 10);
+            if (filters.maxBirthYear) query['birth year'].$lte = parseInt(filters.maxBirthYear, 10);
+        }
+
+        // Filter by trip duration range
+        if (filters.minDuration || filters.maxDuration) {
+            query['tripduration'] = {};
+            if (filters.minDuration) query['tripduration'].$gte = parseInt(filters.minDuration, 10);
+            if (filters.maxDuration) query['tripduration'].$lte = parseInt(filters.maxDuration, 10);
+        }
+
+        // Filter by usertype
+        if (filters.usertype) {
+            query['usertype'] = filters.usertype;
+        }
+
+        return this.Trip.find(query)
+            .sort({ _id: 1 })
+            .skip((page - 1) * perPage)
+            .limit(perPage)
+            .exec();
     }
 
     getTripById(id) {
-        return this.Trip.findOne({_id: id}).exec();
+        return this.Trip.findOne({ _id: id }).exec();
     }
 
     updateTripById(data, id) {
-        return this.Trip.updateOne({_id: id}, { $set: data }).exec();
+        return this.Trip.updateOne({ _id: id }, { $set: data }).exec();
     }
 
     deleteTripById(id) {
-        return this.Trip.deleteOne({_id: id}).exec();
+        return this.Trip.deleteOne({ _id: id }).exec();
     }
 }
