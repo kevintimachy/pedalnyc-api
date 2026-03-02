@@ -49,7 +49,7 @@ module.exports = class TripDB {
         return newTrip;
     }
 
-    getAllTrips(page, perPage, filters) {
+    async getAllTrips(page, perPage, filters) {
         const query = {};
 
         // Filter by date range
@@ -100,8 +100,25 @@ module.exports = class TripDB {
         return this.Trip.findOne({ _id: id }).exec();
     }
 
-    updateTripById(data, id) {
-        return this.Trip.updateOne({ _id: id }, { $set: data }).exec();
+    async updateTripById(data, id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            throw new Error("Invalid trip ID");
+        }
+
+        const updatedTrip = await this.Trip.findByIdAndUpdate(
+            id,
+            { $set: data },
+            {
+                new: true,
+                runValidators: true
+            }
+        ).lean();
+
+        if (!updatedTrip) {
+            throw new Error("Trip not found");
+        }
+
+        return updatedTrip;
     }
 
     deleteTripById(id) {
