@@ -82,6 +82,64 @@ app.delete('/api/trips/:id', (req, res) => {
         });
 });
 
+// Analytics endpoints
+
+app.get('/api/analytics/user-type-distribution', (req, res) => {
+    // Extract filter query params
+    const filters = {
+        startDate: req.query.startDate,
+        endDate: req.query.endDate,
+        minBirthYear: req.query.minBirthYear,
+        maxBirthYear: req.query.maxBirthYear,
+        minDuration: req.query.minDuration,
+        maxDuration: req.query.maxDuration,
+        usertype: req.query.usertype
+    };
+    db.getUserTypeDistribution(filters)
+        .then((data) => res.status(200).json(data))
+        .catch((err) => {
+            console.error('Failed to fetch user type distribution', err);
+            res.status(500).json({ error: "Unable to retrieve user type distribution" });
+        });
+});
+
+app.get('/api/analytics/duration-distribution', (req, res) => {
+    const filters = {
+        startDate: req.query.startDate,
+        endDate: req.query.endDate,
+        minBirthYear: req.query.minBirthYear,
+        maxBirthYear: req.query.maxBirthYear,
+        minDuration: req.query.minDuration,
+        maxDuration: req.query.maxDuration,
+        usertype: req.query.usertype
+    };
+    db.getDurationDistribution(filters)
+        .then((data) => res.status(200).json(data))
+        .catch((err) => {
+            console.error('Failed to fetch duration distribution', err);
+            res.status(500).json({ error: "Unable to retrieve duration distribution" });
+        });
+});
+
+app.get('/api/analytics/top-start-stations', (req, res) => {
+    // Extract filter query params
+    const filters = {
+        startDate: req.query.startDate,
+        endDate: req.query.endDate,
+        minBirthYear: req.query.minBirthYear,
+        maxBirthYear: req.query.maxBirthYear,
+        minDuration: req.query.minDuration,
+        maxDuration: req.query.maxDuration,
+        usertype: req.query.usertype
+    };
+    db.getStartStationDistribution(filters)
+        .then((data) => res.status(200).json(data))
+        .catch((err) => {
+            console.error('Failed to fetch start station distribution', err);
+            res.status(500).json({ error: "Unable to retrieve start station distribution" });
+        });
+});
+
 app.use((req, res) => {
     res.status(404).send('Resource not found');
 });
