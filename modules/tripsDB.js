@@ -101,7 +101,7 @@ module.exports = class TripDB {
 
     //Analtics function to get distribution of user types based on current filters
     async getUserTypeDistribution(filters) {
-        const query = this.filterQuery({ ...filters, usertype: undefined }); // Exclude usertype filter for distribution
+        const query = this.filterQuery(filters); // Exclude usertype filter for distribution
 
         return this.Trip.aggregate([
             { $match: query }, // apply any filters
@@ -156,7 +156,7 @@ module.exports = class TripDB {
 
         // Filter by birth year range
         if (filters.minBirthYear || filters.maxBirthYear) {
-            query['birth year'] = { $exists: true };
+            query['birth year'] = {};
             if (filters.minBirthYear) query['birth year'].$gte = parseInt(filters.minBirthYear, 10);
             if (filters.maxBirthYear) query['birth year'].$lte = parseInt(filters.maxBirthYear, 10);
         }
