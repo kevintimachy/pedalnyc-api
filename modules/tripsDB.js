@@ -117,7 +117,7 @@ module.exports = class TripDB {
             {
                 $bucket: {
                     groupBy: "$tripduration",
-                    boundaries: [0, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000, Infinity],
+                    boundaries: [0, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 2700, 3000, 3300],
                     default: "Other",
                     output: {
                         count: { $sum: 1 }
